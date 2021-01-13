@@ -33,11 +33,17 @@ uint32_t timerFreq_;
 
 /** Tick the provided core model until it halts. */
 int simulate(simeng::Core& core, simeng::MemoryInterface& instructionMemory,
-             simeng::MemoryInterface& dataMemory) {
-  uint64_t iterations = 0;
+             simeng::MemoryInterface& dataMemory, std::ofstream* traceOut,
+             std::ofstream* probeOut) {
+  int iterations = 0;
   uint64_t vitrualCounter = 0;
-  double timerModulo = (clockFreq_ * 1e9) / (timerFreq_ * 1e6);
+  float timerModulo = (clockFreq_ * 1e9) / (timerFreq_ * 1e6);
 
+  int probeIndex = 1;
+  uint64_t probeCycle = 1;
+  int start = 1;
+  std::string traceWriteOut = "";
+  std::string probeWriteOut = "";
   // Tick the core and memory interfaces until the program has halted
   while (!core.hasHalted() || dataMemory.hasPendingRequests()) {
     // Tick the core
@@ -54,11 +60,89 @@ int simulate(simeng::Core& core, simeng::MemoryInterface& instructionMemory,
     instructionMemory.tick();
     dataMemory.tick();
 
+    // Write out trace data
+    std::map<uint64_t, simeng::Trace*>::iterator itM = traceMap.begin();
+    // loop through tracing map and write out the finished instructions
+    while (itM != traceMap.end()) {
+      char str[1000] = "";
+      int success = itM->second->writeCycleOut(str, itM->first, "outoforder");
+      // If written out remove instruction from map
+      if (success) {
+        delete itM->second;
+        itM = traceMap.erase(itM);
+        traceWriteOut += str;
+        if (traceWriteOut.length() > 8196) {
+          *traceOut << traceWriteOut;
+          traceWriteOut = "";
+        }
+      } else
+        break;
+    }
+    // Write out probe data
+    std::list<simeng::Trace*>::iterator itL = probeList.begin();
+    int newline = 0;
+    while (itL != probeList.end()) {
+      simeng::probeTrace pt = (*itL)->getProbeTraces();
+      if (pt.cycle == probeCycle)
+        newline = 0;
+      else {
+        newline = 1;
+        for (uint64_t i = 0; i < (pt.cycle - probeCycle - 1); i++) {
+          probeWriteOut += "\n-";
+        }
+        probeCycle = pt.cycle;
+      }
+      char str[4] = "";
+      int success = (*itL)->writeProbeOut(str, probeIndex, newline, start);
+      // Increment probe counter
+      probeIndex++;
+      // If written out remove probe from list
+      if (success) {
+        start = 0;
+        delete (*itL);
+        itL = probeList.erase(itL);
+        probeWriteOut += str;
+        if (probeWriteOut.length() > 8196) {
+          *probeOut << probeWriteOut;
+          probeWriteOut = "";
+        }
+      } else
+        itL++;
+    }
     iterations++;
+    trace_cycle = iterations;
   }
+  if (traceWriteOut != "") {
+    *traceOut << traceWriteOut;
+  }
+  if (probeWriteOut != "") {
+    *probeOut << probeWriteOut;
+  }
+  // *probeOut << "\n";
+  /*// iterator for in(I) map(M)
+  std::map<uint64_t, simeng::Trace*>::iterator itIM;
+  for(itIM = traceMap->begin(); itIM != traceMap->end(); itIM++){
+    simeng::cycleTrace tr = itIM->second->getCycleTraces();
+    printf("ID: %" PRId64 ", fetch: %" PRId64 ", \tinstruction: %s,\t decode: %"
+  PRId64 ", dispatch: %" PRId64 ", issue: %" PRId64 ", complete: %" PRId64 ",
+  retire: %" PRId64 ", finished: %d\n", itIM->first, tr.fetch.cycle,
+  tr.fetch.disasm.c_str(), tr.decode, tr.dispatch, tr.issue, tr.complete,
+  tr.retire, tr.finished);
+  }*/
 
   return iterations;
 }
+
+bool tracing;
+bool enableTrace;
+bool probing;
+bool enableProbe;
+bool enableFocus;
+bool recordEvents;
+uint64_t trace_cycle;
+uint64_t traceId;
+std::map<uint64_t, simeng::Trace*> traceMap;
+std::list<simeng::Trace*> probeList;
 
 int main(int argc, char** argv) {
   // Print out build metadata
@@ -73,6 +157,16 @@ int main(int argc, char** argv) {
   SimulationMode mode = SimulationMode::InOrderPipelined;
   std::string executablePath = "";
   YAML::Node config;
+
+  // Set defaults to tracing variables
+  tracing = false;
+  enableTrace = false;
+  probing = false;
+  enableProbe = false;
+  enableFocus = false;
+  recordEvents = true;
+  trace_cycle = 1;
+  traceId = 1;
 
   if (argc > 1) {
     config = simeng::ModelConfig(argv[1]).getConfigFile();
@@ -213,6 +307,12 @@ int main(int argc, char** argv) {
   simeng::kernel::Linux kernel;
   kernel.createProcess(*process.get());
 
+  // Initialise trace/probe objects
+  std::ofstream traceOut;
+  traceOut.open("trace.out", std::ofstream::binary | std::ofstream::trunc);
+  std::ofstream probeOut;
+  probeOut.open("probe.out", std::ofstream::binary | std::ofstream::trunc);
+
   simeng::FlatMemoryInterface instructionMemory(processMemory,
                                                 processMemorySize);
 
@@ -293,10 +393,13 @@ int main(int argc, char** argv) {
   }
 
   std::cout << "Running in " << modeString << " mode\n";
+  std::cout << "Tracing enabled\n";
+  std::cout << "Probing enabled\n";
   std::cout << "Starting..." << std::endl;
   auto startTime = std::chrono::high_resolution_clock::now();
 
-  iterations = simulate(*core, *dataMemory, instructionMemory);
+  iterations =
+      simulate(*core, *dataMemory, instructionMemory, &traceOut, &probeOut);
 
   auto endTime = std::chrono::high_resolution_clock::now();
   auto duration =
@@ -354,6 +457,8 @@ int main(int argc, char** argv) {
 #endif
 
   delete[] processMemory;
+  traceOut.close();
+  probeOut.close();
 
   return 0;
 }
