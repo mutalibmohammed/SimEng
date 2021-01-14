@@ -133,14 +133,8 @@ int simulate(simeng::Core& core, simeng::MemoryInterface& instructionMemory,
   return iterations;
 }
 
-bool tracing;
-bool enableTrace;
-bool probing;
-bool enableProbe;
-bool enableFocus;
-bool recordEvents;
-uint64_t trace_cycle;
-uint64_t traceId;
+uint64_t trace_cycle = 1;
+uint64_t traceId = 1;
 std::map<uint64_t, simeng::Trace*> traceMap;
 std::list<simeng::Trace*> probeList;
 
@@ -157,16 +151,6 @@ int main(int argc, char** argv) {
   SimulationMode mode = SimulationMode::InOrderPipelined;
   std::string executablePath = "";
   YAML::Node config;
-
-  // Set defaults to tracing variables
-  tracing = false;
-  enableTrace = false;
-  probing = false;
-  enableProbe = false;
-  enableFocus = false;
-  recordEvents = true;
-  trace_cycle = 1;
-  traceId = 1;
 
   if (argc > 1) {
     config = simeng::ModelConfig(argv[1]).getConfigFile();
