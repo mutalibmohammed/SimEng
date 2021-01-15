@@ -17,6 +17,7 @@
 #include "simeng/arch/aarch64/Architecture.hh"
 #include "simeng/arch/aarch64/Instruction.hh"
 #include "simeng/arch/aarch64/MicroDecoder.hh"
+#include "simeng/control.hh"
 #include "simeng/kernel/Linux.hh"
 #include "simeng/models/emulation/Core.hh"
 #include "simeng/models/inorder/Core.hh"
@@ -132,11 +133,6 @@ int simulate(simeng::Core& core, simeng::MemoryInterface& instructionMemory,
 
   return iterations;
 }
-
-uint64_t trace_cycle = 1;
-uint64_t traceId = 1;
-std::map<uint64_t, simeng::Trace*> traceMap;
-std::list<simeng::Trace*> probeList;
 
 int main(int argc, char** argv) {
   // Print out build metadata

@@ -27,6 +27,7 @@ set(SIMENG_SOURCES
     AlwaysNotTakenPredictor.cc
     ArchitecturalRegisterFileSet.cc
     CMakeLists.txt
+    control.cc
     Elf.cc
     FixedLatencyMemoryInterface.cc
     FlatMemoryInterface.cc
