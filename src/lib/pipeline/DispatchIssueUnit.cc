@@ -156,6 +156,12 @@ void DispatchIssueUnit::issue() {
     auto& queue = rs.ports[portMapping_[i].second].ready;
     if (issuePorts_[i].isStalled()) {
       if (queue.size() > 0) {
+        // Stalled.issue.portBusy
+        probeTrace newProbe = {7, trace_cycle, 0};
+        Trace* newTrace = new Trace;
+        newTrace->setProbeTraces(newProbe);
+        probeList.push_back(newTrace);
+
         portBusyStalls_++;
       }
       continue;
@@ -163,6 +169,20 @@ void DispatchIssueUnit::issue() {
 
     if (queue.size() > 0) {
       auto& uop = queue.front();
+
+      // Store cycle at which instruction was issued
+      if (uop->getTraceId() != 0) {
+        std::map<uint64_t, Trace*>::iterator it =
+            traceMap.find(uop->getTraceId());
+        if (it != traceMap.end()) {
+          cycleTrace tr = it->second->getCycleTraces();
+          if (tr.finished != 1) {
+            tr.issue = trace_cycle;
+            it->second->setCycleTraces(tr);
+          }
+        }
+      }
+
       issuePorts_[i].getTailSlots()[0] = std::move(uop);
       queue.pop_front();
 
@@ -182,6 +202,12 @@ void DispatchIssueUnit::issue() {
         return;
       }
     }
+    // Stalled.issue.rsEmpty
+    probeTrace newProbe = {8, trace_cycle, 0};
+    Trace* newTrace = new Trace;
+    newTrace->setProbeTraces(newProbe);
+    probeList.push_back(newTrace);
+
     frontendStalls_++;
   }
 }
