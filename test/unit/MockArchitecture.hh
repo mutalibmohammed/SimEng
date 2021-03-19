@@ -24,6 +24,8 @@ class MockArchitecture : public arch::Architecture {
   MOCK_CONST_METHOD0(getMaxInstructionSize, uint8_t());
   MOCK_CONST_METHOD0(getVCTreg, simeng::Register());
   MOCK_CONST_METHOD0(getPCCreg, simeng::Register());
+
+  MOCK_CONST_METHOD2(forwardPMUInc, void(uint16_t event, uint64_t value));
 };
 
 }  // namespace simeng

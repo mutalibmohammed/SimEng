@@ -211,7 +211,7 @@ int main(int argc, char** argv) {
 
   // Create the OS kernel with the process
   simeng::kernel::Linux kernel;
-  kernel.createProcess(*process.get());
+  kernel.createProcess(*process.get(), processMemory);
 
   simeng::FlatMemoryInterface instructionMemory(processMemory,
                                                 processMemorySize);
@@ -296,7 +296,7 @@ int main(int argc, char** argv) {
   std::cout << "Starting..." << std::endl;
   auto startTime = std::chrono::high_resolution_clock::now();
 
-  iterations = simulate(*core, *dataMemory, instructionMemory);
+  iterations = simulate(*core, instructionMemory, *dataMemory);
 
   auto endTime = std::chrono::high_resolution_clock::now();
   auto duration =
