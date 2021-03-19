@@ -99,6 +99,9 @@ class Architecture {
 
   /** Returns the system register for the Processor Cycle Counter. */
   virtual simeng::Register getPCCreg() const = 0;
+
+  /** Relays an increment in a perforamnce event to the linux kernel. */
+  virtual void forwardPMUInc(uint16_t event, uint64_t value) const = 0;
 };
 
 }  // namespace arch
