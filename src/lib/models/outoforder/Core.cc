@@ -253,20 +253,27 @@ bool Core::hasHalted() const {
     return false;
   }
 
+  // Check if there are any active exceptions
+  if (exceptionHandler_ != nullptr) {
+    return false;
+  }
+
   if (reorderBuffer_.size() > 0) {
     return false;
   }
 
-  auto decodeSlots = fetchToDecodeBuffer_.getHeadSlots();
+  // Check heads and tails of each buffer
+  auto decodeSlotsHead = fetchToDecodeBuffer_.getHeadSlots();
+  auto decodeSlotsTail = fetchToDecodeBuffer_.getTailSlots();
   for (size_t slot = 0; slot < fetchToDecodeBuffer_.getWidth(); slot++) {
-    if (decodeSlots[slot].size() > 0) {
+    if (decodeSlotsHead[slot].size() > 0 || decodeSlotsTail[slot].size() > 0) {
       return false;
     }
   }
-
-  auto renameSlots = decodeToRenameBuffer_.getHeadSlots();
+  auto renameSlotsHead = decodeToRenameBuffer_.getHeadSlots();
+  auto renameSlotsTail = decodeToRenameBuffer_.getTailSlots();
   for (size_t slot = 0; slot < decodeToRenameBuffer_.getWidth(); slot++) {
-    if (renameSlots[slot] != nullptr) {
+    if (renameSlotsHead[slot] != nullptr || renameSlotsTail[slot] != nullptr) {
       return false;
     }
   }
