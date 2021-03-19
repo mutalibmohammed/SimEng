@@ -60,8 +60,7 @@ class Architecture : public arch::Architecture {
   /** Returns the system register for the Processor Cycle Counter. */
   simeng::Register getPCCreg() const override;
 
-  /** Retrieve an ExecutionInfo object for the requested instruction. If a
-  /** Relays an increment in a perforamnce event to the linux kernel. */
+  /** Relays the new count of the defined performance event to the kernel. */
   void forwardPMUInc(uint16_t event, uint64_t value) const override;
 
   /** Retrieve an executionInfo object for the requested instruction. If a
