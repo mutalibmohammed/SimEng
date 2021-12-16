@@ -56,7 +56,7 @@ uint64_t Linux::getDirFd(int64_t dfd, std::string pathname) {
     // fd exists for directory referenced
     if (strncmp(pathname.c_str(), absolutePath, strlen(absolutePath)) != 0) {
       assert(dfd < processStates_[0].fileDescriptorTable.size());
-      dfd_temp = processStates_[0].fileDescriptorTable[dfd];
+      dfd_temp = processStates_[0].fileDescriptorTable[dfd].first;
       if (dfd_temp < 0) {
         return -1;
       }
@@ -123,7 +123,7 @@ uint64_t Linux::clockGetTime(uint64_t clkId, uint64_t systemTimer,
 
 int64_t Linux::ftruncate(uint64_t fd, uint64_t length) {
   assert(fd < processStates_[0].fileDescriptorTable.size());
-  int64_t hfd = processStates_[0].fileDescriptorTable[fd];
+  int64_t hfd = processStates_[0].fileDescriptorTable[fd].first;
   if (hfd < 0) {
     return EBADF;
   }
@@ -644,9 +644,6 @@ int64_t Linux::perfEventOpen(uint64_t attr, pid_t pid, int64_t cpu,
   return vfd;
 }
 
-<<<<<<< HEAD
-int64_t Linux::readlinkat(int64_t dirfd, const std::string& pathname, char* buf,
-=======
 void Linux::pmuIncrement(uint16_t event, uint64_t value) {
   // Check existence of event in hwEvents_ and increment associated performance
   // eventsby `value` if true
@@ -658,8 +655,7 @@ void Linux::pmuIncrement(uint16_t event, uint64_t value) {
   }
 }
 
-int64_t Linux::readlinkat(int64_t dirfd, const std::string pathname, char* buf,
->>>>>>> 35fefc6 (Added support for perf_event_open syscall along with a set of associated ioctl requests and read request to PMU fds)
+int64_t Linux::readlinkat(int64_t dirfd, const std::string& pathname, char* buf,
                           size_t bufsize) const {
   const auto& processState = processStates_[0];
   if (pathname == "/proc/self/exe") {
