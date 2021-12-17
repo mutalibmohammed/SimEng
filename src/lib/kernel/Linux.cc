@@ -672,7 +672,7 @@ int64_t Linux::readlinkat(int64_t dirfd, const std::string& pathname, char* buf,
 
 int64_t Linux::getdents64(int64_t fd, void* buf, uint64_t count) {
   assert(fd < processStates_[0].fileDescriptorTable.size());
-  int64_t hfd = processStates_[0].fileDescriptorTable[fd];
+  int64_t hfd = processStates_[0].fileDescriptorTable[fd].first;
   if (hfd < 0) {
     return EBADF;
   }
