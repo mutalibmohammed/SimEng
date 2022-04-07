@@ -1,5 +1,5 @@
 import sst
-import sys
+import os
 
 # Based off of https://github.com/sstsimulator/sst-tutorials/blob/master/exercises/ex1/ex1.py
 
@@ -11,9 +11,9 @@ cpu_clock = "2.5GHz"
 link_latency = "300ps"
 cache_line_size = 128
 # executable_path = "/home/br-arutterford/stream-simeng/gcc_stream_00699050"
-executable_path = sys.argv[2]
-executable_args = sys.argv[3]
-config_path = sys.argv[1]
+executable_path = os.environ.get('SIMENG_EXE')
+executable_args = os.environ.get('SIMENG_ARG')
+config_path = os.environ.get('SIMENG_CNF')
 
 simeng = sst.Component("SimEngElement", "SimEngElement.SimEngElement")
 simeng.addParams({
@@ -35,8 +35,7 @@ l1.addParams({
     "replacement_policy": "lru",
     "coherence_protocol": "MESI",
     "prefetcher": "cassini.StridePrefetcher",
-    "debug": "0",
-    "addr_range_start": "0"
+    "debug": "0"
 })
 
 # print("Configuring L2...")
@@ -66,13 +65,15 @@ l1.addParams({
 mem = sst.Component("memory", "memHierarchy.MemController")
 mem.addParams({
     "clock":  "2400 MHz",
+    "addr_range_start": "0",
+    "addr_range_end": "0"
 })
 
 # Had to add this to silence some warnings
 backend = mem.setSubComponent("backend", "memHierarchy.simpleMem")
 backend.addParams({
     "access_time":  "10ns",
-    "mem_size":     "1 GiB",
+    "mem_size":     "1030 MiB"
 })
 
 sst.setStatisticOutput("sst.statOutputCSV")
