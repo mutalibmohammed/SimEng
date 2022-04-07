@@ -18,3 +18,6 @@ CMakeFiles/
 
 **/capstone-config-version.cmake
 **/capstone-config.cmake
+
+*.so
+*.csv
