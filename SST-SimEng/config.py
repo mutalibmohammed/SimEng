@@ -66,7 +66,7 @@ mem = sst.Component("memory", "memHierarchy.MemController")
 mem.addParams({
     "clock":  "2400 MHz",
     "addr_range_start": "0",
-    "addr_range_end": "0"
+    "addr_range_end": "10000000000"
 })
 
 # Had to add this to silence some warnings
