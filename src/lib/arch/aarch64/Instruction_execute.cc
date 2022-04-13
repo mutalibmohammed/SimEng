@@ -994,7 +994,7 @@ void Instruction::execute() {
         break;
       }
       case Opcode::AArch64_BRK: {
-        return executionNYI();
+        // return executionNYI();
         break;
       }
       case Opcode::AArch64_BRKAS_PPzP: {
