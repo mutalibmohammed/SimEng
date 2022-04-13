@@ -31,7 +31,8 @@ void SSTMemoryInterface::tick() { tickCounter_++; }
 
 void SSTMemoryInterface::requestRead(const MemoryAccessTarget& target,
                                      uint64_t requestId) {
-  if (target.address + target.size > size_) {
+  if (target.address + target.size > size_ ||
+      unsignedOverflow_(target.address, target.size)) {
     // Read outside of memory; return an invalid value to signal a fault
     completedReads_.push_back({target, RegisterValue(), requestId});
   } else {

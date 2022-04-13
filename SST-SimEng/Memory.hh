@@ -1,11 +1,11 @@
 #pragma once
 
-#include "simeng/MemoryInterface.hh"
+#include <sst/core/interfaces/simpleMem.h>
 
 #include <unordered_map>
 #include <vector>
 
-#include <sst/core/interfaces/simpleMem.h>
+#include "simeng/MemoryInterface.hh"
 
 using namespace SST::Interfaces;
 
@@ -13,7 +13,6 @@ namespace simeng {
 
 /** An SST memory interface request. */
 struct SSTMemoryInterfaceRequest {
-
   /** Is this request split since it straddles cache lines? **/
   bool split;
 
@@ -34,33 +33,41 @@ struct SSTMemoryInterfaceRequest {
   std::vector<uint8_t> splitData;
 
   /** Construct a write request. */
-  SSTMemoryInterfaceRequest(const MemoryAccessTarget &target,
-                            const RegisterValue &data)
+  SSTMemoryInterfaceRequest(const MemoryAccessTarget& target,
+                            const RegisterValue& data)
       : partnerHandled(false), split(false), target(target), data(data) {}
 
   /** Construct a split write request. */
-  SSTMemoryInterfaceRequest(const MemoryAccessTarget &target,
-                            const RegisterValue &data, uint64_t partnerSSTId)
-      : partnerHandled(false), split(true), target(target), data(data),
+  SSTMemoryInterfaceRequest(const MemoryAccessTarget& target,
+                            const RegisterValue& data, uint64_t partnerSSTId)
+      : partnerHandled(false),
+        split(true),
+        target(target),
+        data(data),
         partnerSSTId(partnerSSTId) {}
 
   /** Construct a read request. */
-  SSTMemoryInterfaceRequest(const MemoryAccessTarget &target,
+  SSTMemoryInterfaceRequest(const MemoryAccessTarget& target,
                             uint64_t requestId)
-      : partnerHandled(false), split(false), target(target),
+      : partnerHandled(false),
+        split(false),
+        target(target),
         requestId(requestId) {}
 
   /** Construct a split read request. */
-  SSTMemoryInterfaceRequest(const MemoryAccessTarget &target,
+  SSTMemoryInterfaceRequest(const MemoryAccessTarget& target,
                             uint64_t requestId, uint64_t partnerSSTId)
-      : partnerHandled(false), split(true), target(target),
-        requestId(requestId), partnerSSTId(partnerSSTId) {}
+      : partnerHandled(false),
+        split(true),
+        target(target),
+        requestId(requestId),
+        partnerSSTId(partnerSSTId) {}
 };
 
 /** An SST memory interface. */
 class SSTMemoryInterface : public MemoryInterface {
-public:
-  SSTMemoryInterface(char *memory, size_t size, SimpleMem *mem,
+ public:
+  SSTMemoryInterface(char* memory, size_t size, SimpleMem* mem,
                      uint64_t cacheLineWidth);
 
   /** Queue a read request from the supplied target location.
@@ -68,11 +75,11 @@ public:
    * The caller can optionally provide an ID that will be attached to completed
    * read results.
    */
-  void requestRead(const MemoryAccessTarget &target,
+  void requestRead(const MemoryAccessTarget& target,
                    uint64_t requestId = 0) override;
   /** Queue a write request of `data` to the target location. */
-  void requestWrite(const MemoryAccessTarget &target,
-                    const RegisterValue &data) override;
+  void requestWrite(const MemoryAccessTarget& target,
+                    const RegisterValue& data) override;
   /** Retrieve all completed requests. */
   const span<MemoryReadResult> getCompletedReads() const override;
 
@@ -87,11 +94,11 @@ public:
 
   void handleResponse(bool read, uint64_t id, std::vector<uint8_t> data);
 
-private:
+ private:
   /** The SST memory interface. */
-  SimpleMem *mem_;
+  SimpleMem* mem_;
   /** The array representing the memory system to access. */
-  char *memory_;
+  char* memory_;
   /** The size of accessible memory. */
   size_t size_;
   /** A vector containing all completed read requests. */
@@ -104,6 +111,11 @@ private:
   uint64_t tickCounter_ = 0;
 
   uint64_t cacheLineWidth_;
+
+  /** Returns true if unsigned overflow occurs. */
+  bool unsignedOverflow_(uint64_t a, uint64_t b) const {
+    return (a + b) < a || (a + b) < b;
+  }
 };
 
-} // namespace simeng
+}  // namespace simeng
