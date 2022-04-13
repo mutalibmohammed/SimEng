@@ -1,4 +1,5 @@
 #include "SimEngElement.hh"
+
 #include "Memory.hh"
 
 enum class SimulationMode { Emulation, InOrderPipelined, OutOfOrder };
@@ -6,7 +7,7 @@ enum class SimulationMode { Emulation, InOrderPipelined, OutOfOrder };
 float clockFreq_;
 uint32_t timerFreq_;
 
-SimEngElement::SimEngElement(SST::ComponentId_t id, SST::Params &params)
+SimEngElement::SimEngElement(SST::ComponentId_t id, SST::Params& params)
     : SST::Component(id) {
   // Set the prefix to output messages
   output.init(getName() + "-> ", 1, 0, SST::Output::STDOUT);
@@ -171,7 +172,7 @@ void SimEngElement::init(unsigned int phase) {
       image.push_back((uint8_t)processMemory[i]);
     }
 
-    SimpleMem::Request *req = new SimpleMem::Request(SimpleMem::Request::Write,
+    SimpleMem::Request* req = new SimpleMem::Request(SimpleMem::Request::Write,
                                                      0, image.size(), image);
     output.verbose(CALL_INFO, 1, 0, "Transferring data to memory...\n");
     mem->sendInitData(req);
@@ -203,7 +204,7 @@ void SimEngElement::finish() {
   // Print stats
   std::cout << "\n";
   auto stats = core->getStats();
-  for (const auto &[key, value] : stats) {
+  for (const auto& [key, value] : stats) {
     std::cout << key << ": " << value << "\n";
   }
 
@@ -214,18 +215,10 @@ void SimEngElement::finish() {
   delete[] processMemory;
 }
 
-void SimEngElement::handleEvent(SimpleMem::Request *event) {
-  std::cout << "Handling "
-            << (event->cmd == SimpleMem::Request::Command::ReadResp ? "read"
-                                                                    : "write")
-            << " response " << event->id << std::endl;
-  dataMemory->handleResponse(event->cmd ==
-                                 SimpleMem::Request::Command::ReadResp,
-                             event->id, event->data);
-  std::cout << "Handled "
-            << (event->cmd == SimpleMem::Request::Command::ReadResp ? "read"
-                                                                    : "write")
-            << " response " << event->id << std::endl;
+void SimEngElement::handleEvent(SimpleMem::Request* event) {
+  dataMemory->handleResponse(
+      event->cmd == SimpleMem::Request::Command::ReadResp, event->id,
+      event->data);
   delete event;
 }
 

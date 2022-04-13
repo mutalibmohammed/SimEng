@@ -1,6 +1,11 @@
 #ifndef _SIMENG_ELEMENT_H
 #define _SIMENG_ELEMENT_H
 
+#include <sst/core/component.h>
+#include <sst/core/eli/elementinfo.h>
+#include <sst/core/interfaces/simpleMem.h>
+#include <sst/core/sst_config.h>
+
 #include <chrono>
 #include <cmath>
 #include <cstring>
@@ -8,11 +13,7 @@
 #include <iostream>
 #include <string>
 
-#include <sst/core/component.h>
-#include <sst/core/eli/elementinfo.h>
-#include <sst/core/interfaces/simpleMem.h>
-#include <sst/core/sst_config.h>
-
+#include "Memory.hh"
 #include "simeng/AlwaysNotTakenPredictor.hh"
 #include "simeng/BTBPredictor.hh"
 #include "simeng/BTB_BWTPredictor.hh"
@@ -34,13 +35,11 @@
 #include "simeng/pipeline/BalancedPortAllocator.hh"
 #include "simeng/version.hh"
 
-#include "Memory.hh"
-
 using namespace SST::Interfaces;
 
 class SimEngElement : public SST::Component {
-public:
-  SimEngElement(SST::ComponentId_t id, SST::Params &params);
+ public:
+  SimEngElement(SST::ComponentId_t id, SST::Params& params);
   ~SimEngElement();
 
   void init(unsigned int phase);
@@ -61,11 +60,11 @@ public:
 
   SST_ELI_DOCUMENT_PORTS({"cache_link", "Connects the core to a cache", {}})
 
-private:
-  void handleEvent(SimpleMem::Request *event);
+ private:
+  void handleEvent(SimpleMem::Request* event);
   SST::Output output;
-  SST::TimeConverter *timeConverter;
-  SimpleMem *mem;
+  SST::TimeConverter* timeConverter;
+  SimpleMem* mem;
 
   std::string executablePath;
   std::string executableArgs;
@@ -73,7 +72,7 @@ private:
   uint64_t cacheLineSize;
   std::unique_ptr<simeng::kernel::LinuxProcess> process;
   std::unique_ptr<simeng::kernel::Linux> kernel;
-  char *processMemory;
+  char* processMemory;
   std::unique_ptr<simeng::arch::Architecture> arch;
   std::unique_ptr<simeng::MemoryInterface> instructionMemory;
   std::unique_ptr<simeng::BranchPredictor> predictor;
