@@ -255,10 +255,6 @@ bool Core::hasHalted() const {
     return false;
   }
 
-  if (exceptionHandler_ != nullptr) {
-    return false;
-  }
-
   if (reorderBuffer_.size() > 0) {
     return false;
   }
