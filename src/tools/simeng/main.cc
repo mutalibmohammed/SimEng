@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <cstring>
@@ -41,10 +42,12 @@ int simulate(simeng::Core& core, simeng::MemoryInterface& instructionMemory,
   float timerModulo = (clockFreq_ * 1e9) / (timerFreq_ * 1e6);
 
   int probeIndex = 1;
-  uint64_t probeCycle = 1;
+  uint64_t probeCycle = 0;
   int start = 1;
   std::string traceWriteOut = "";
+  char* traceStr = (char*)malloc(1000 * sizeof(char));
   std::string probeWriteOut = "";
+  char* probeStr = (char*)malloc(5 * sizeof(char));
   // Tick the core and memory interfaces until the program has halted
   while (!core.hasHalted() || dataMemory.hasPendingRequests()) {
     // Tick the core
@@ -65,13 +68,13 @@ int simulate(simeng::Core& core, simeng::MemoryInterface& instructionMemory,
     std::map<uint64_t, simeng::Trace*>::iterator itM = traceMap.begin();
     // loop through tracing map and write out the finished instructions
     while (itM != traceMap.end()) {
-      char str[1000] = "";
-      int success = itM->second->writeCycleOut(str, itM->first, "outoforder");
+      int success =
+          itM->second->writeCycleOut(traceStr, itM->first, "outoforder");
       // If written out remove instruction from map
       if (success) {
         delete itM->second;
         itM = traceMap.erase(itM);
-        traceWriteOut += str;
+        traceWriteOut += traceStr;
         if (traceWriteOut.length() > 8196) {
           *traceOut << traceWriteOut;
           traceWriteOut = "";
@@ -88,13 +91,14 @@ int simulate(simeng::Core& core, simeng::MemoryInterface& instructionMemory,
         newline = 0;
       else {
         newline = 1;
-        for (uint64_t i = 0; i < (pt.cycle - probeCycle - 1); i++) {
+        for (uint64_t i = 0; i < std::min((pt.cycle - probeCycle - 1),
+                                          static_cast<uint64_t>(0));
+             i++) {
           probeWriteOut += "\n-";
         }
         probeCycle = pt.cycle;
       }
-      char str[5] = "";
-      int success = (*itL)->writeProbeOut(str, probeIndex, newline, start);
+      int success = (*itL)->writeProbeOut(probeStr, probeIndex, newline, start);
       // Increment probe counter
       probeIndex++;
       // If written out remove probe from list
@@ -102,7 +106,7 @@ int simulate(simeng::Core& core, simeng::MemoryInterface& instructionMemory,
         start = 0;
         delete (*itL);
         itL = probeList.erase(itL);
-        probeWriteOut += str;
+        probeWriteOut += probeStr;
         if (probeWriteOut.length() > 8196) {
           *probeOut << probeWriteOut;
           probeWriteOut = "";
