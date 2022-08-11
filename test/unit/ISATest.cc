@@ -10,7 +10,7 @@ TEST(ISATest, CreateAArch64) {
   simeng::kernel::Linux kernel;
   YAML::Node config = YAML::Load(
       "{Core: {Simulation-Mode: emulation, Micro-Operations: True, "
-      "Vector-Length: 512}}");
+      "Vector-Length: 512, Streaming-Vector-Length: 512}}");
   // Pass a config file with only the options required by the aarch64
   // architecture class to function
   std::unique_ptr<simeng::arch::Architecture> isa =
