@@ -13,7 +13,8 @@ std::forward_list<InstructionMetadata> Architecture::metadataCache;
 Architecture::Architecture(kernel::Linux& kernel, YAML::Node config)
     : linux_(kernel),
       microDecoder_(std::make_unique<MicroDecoder>(config)),
-      VL_(config["Core"]["Vector-Length"].as<uint64_t>()) {
+      VL_(config["Core"]["Vector-Length"].as<uint64_t>()), 
+      SVL_(config["Core"]["Streaming-Vector-Length"].as<uint64_t>()) {
   if (cs_open(CS_ARCH_ARM64, CS_MODE_ARM, &capstoneHandle) != CS_ERR_OK) {
     std::cerr << "Could not create capstone handle" << std::endl;
     exit(1);
@@ -266,6 +267,8 @@ ProcessStateChange Architecture::getInitialState() const {
 uint8_t Architecture::getMaxInstructionSize() const { return 4; }
 
 uint64_t Architecture::getVectorLength() const { return VL_; }
+
+uint64_t Architecture::getStreamingVectorLength() const { return SVL_; }
 
 simeng::Register Architecture::getVCTreg() const {
   return {RegisterType::SYSTEM,
