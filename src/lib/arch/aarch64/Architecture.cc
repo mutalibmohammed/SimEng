@@ -230,6 +230,7 @@ std::vector<RegisterFileStructure> Architecture::getRegisterFileStructures()
       {32, 17},         // Predicate
       {1, 1},           // NZCV
       {8, numSysRegs},  // System
+      {512 * 512, 1},   // Matrix
   };
 }
 
