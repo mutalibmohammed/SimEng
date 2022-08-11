@@ -54,7 +54,8 @@ class Architecture : public arch::Architecture {
   /** Returns the current vector length set by the provided configuration. */
   uint64_t getVectorLength() const;
 
-  /** Returns the current streaming vector length set by the provided configuration. */
+  /** Returns the current streaming vector length set by the provided
+   * configuration. */
   uint64_t getStreamingVectorLength() const;
 
   /** Returns the system register for the Virtual Counter Timer. */
@@ -68,6 +69,12 @@ class Architecture : public arch::Architecture {
    * port information, return that instead of the group-defined execution
    * information. */
   ExecutionInfo getExecutionInfo(Instruction& insn) const;
+
+  /** Returns the current value of SVCRval_. */
+  uint64_t getSVCRval() const;
+
+  /** Update the value of SVCRval_. */
+  void setSVCRval(const uint64_t newVal) const;
 
  private:
   /** A decoding cache, mapping an instruction word to a previously decoded
@@ -104,6 +111,10 @@ class Architecture : public arch::Architecture {
 
   /** The streaming vector length used by the SME extension in bits. */
   uint64_t SVL_;
+
+  /** The value of the SVCR system register.
+   * Allows value to be retrieved within execution pipeline. */
+  static uint64_t SVCRval_;
 };
 
 }  // namespace aarch64

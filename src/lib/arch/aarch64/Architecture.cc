@@ -9,11 +9,12 @@ namespace aarch64 {
 
 std::unordered_map<uint32_t, Instruction> Architecture::decodeCache;
 std::forward_list<InstructionMetadata> Architecture::metadataCache;
+uint64_t Architecture::SVCRval_;
 
 Architecture::Architecture(kernel::Linux& kernel, YAML::Node config)
     : linux_(kernel),
       microDecoder_(std::make_unique<MicroDecoder>(config)),
-      VL_(config["Core"]["Vector-Length"].as<uint64_t>()), 
+      VL_(config["Core"]["Vector-Length"].as<uint64_t>()),
       SVL_(config["Core"]["Streaming-Vector-Length"].as<uint64_t>()) {
   if (cs_open(CS_ARCH_ARM64, CS_MODE_ARM, &capstoneHandle) != CS_ERR_OK) {
     std::cerr << "Could not create capstone handle" << std::endl;
@@ -30,6 +31,7 @@ Architecture::Architecture(kernel::Linux& kernel, YAML::Node config)
   systemRegisterMap_[ARM64_SYSREG_MIDR_EL1] = systemRegisterMap_.size();
   systemRegisterMap_[ARM64_SYSREG_CNTVCT_EL0] = systemRegisterMap_.size();
   systemRegisterMap_[ARM64_SYSREG_PMCCNTR_EL0] = systemRegisterMap_.size();
+  systemRegisterMap_[ARM64_SYSREG_SVCR] = systemRegisterMap_.size();
 
   // Instantiate an ExecutionInfo entry for each group in the InstructionGroup
   // namespace.
@@ -279,6 +281,12 @@ simeng::Register Architecture::getPCCreg() const {
   return {
       RegisterType::SYSTEM,
       static_cast<uint16_t>(getSystemRegisterTag(ARM64_SYSREG_PMCCNTR_EL0))};
+}
+
+uint64_t Architecture::getSVCRval() const { return SVCRval_; }
+
+void Architecture::setSVCRval(const uint64_t newVal) const {
+  SVCRval_ = newVal;
 }
 
 }  // namespace aarch64
