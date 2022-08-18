@@ -50,6 +50,11 @@ inline std::string paramToString(
       !(std::get<1>(val.param)["Vector-Length"].IsNull())) {
     vectorLengthString =
         "WithVL" + std::get<1>(val.param)["Vector-Length"].as<std::string>();
+  } else if (std::get<1>(val.param)["Streaming-Vector-Length"].IsDefined() &&
+             !(std::get<1>(val.param)["Streaming-Vector-Length"].IsNull())) {
+    vectorLengthString =
+        "WithSVL" +
+        std::get<1>(val.param)["Streaming-Vector-Length"].as<std::string>();
   }
   return coreString + vectorLengthString;
 }
@@ -64,6 +69,18 @@ inline std::vector<std::tuple<CoreType, YAML::Node>> genCoreTypeVLPairs(
     coreVLPairs.push_back(std::make_tuple(type, vlNode));
   }
   return coreVLPairs;
+}
+
+/** A helper function to generate all coreType streaming-vector-length pairs. */
+inline std::vector<std::tuple<CoreType, YAML::Node>> genCoreTypeSVLPairs(
+    CoreType type) {
+  std::vector<std::tuple<CoreType, YAML::Node>> coreSVLPairs;
+  for (uint64_t i = 128; i <= 2048; i += 128) {
+    YAML::Node svlNode;
+    svlNode["Streaming-Vector-Length"] = i;
+    coreSVLPairs.push_back(std::make_tuple(type, svlNode));
+  }
+  return coreSVLPairs;
 }
 
 /** A helper macro to run a snippet of Armv8 assembly code, returning from the
