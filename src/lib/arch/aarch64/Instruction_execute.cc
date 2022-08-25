@@ -4945,6 +4945,17 @@ void Instruction::execute() {
         results[0] = sveHelp::sveZip_vecs<uint32_t>(operands, VL_bits, true);
         break;
       }
+      case Opcode::AArch64_ZERO_M: {  // zero {mask}
+        // SME
+        if (!ZAenabled) {
+          // Not in right context mode. Raise exception
+          return ZAdisabled();
+        }
+        for (int i = 0; i < destinationRegisterCount; i++) {
+          results[i] = RegisterValue(0, 256);
+        }
+        break;
+      }
       default:
         return executionNYI();
     }
@@ -4962,7 +4973,7 @@ void Instruction::execute() {
     }
   }
 #endif
-}
+}  // namespace aarch64
 
 }  // namespace aarch64
 }  // namespace arch
