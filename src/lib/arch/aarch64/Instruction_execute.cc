@@ -1188,6 +1188,10 @@ void Instruction::execute() {
         results[0] = sveHelp::sveFaddaPredicated<double>(operands, VL_bits);
         break;
       }
+      case Opcode::AArch64_FADDA_VPZ_S: {  // fadda sd, pg/m, sn, zm.s
+        results[0] = sveHelp::sveFaddaPredicated<float>(operands, VL_bits);
+        break;
+      }
       case Opcode::AArch64_FADDDrr: {  // fadd dd, dn, dm
         results[0] = {arithmeticHelp::add_3ops<double>(operands), 256};
         break;
