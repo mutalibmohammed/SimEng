@@ -197,7 +197,8 @@ enum class InstructionException {
   StreamingModeUpdate,
   ZAregisterStatusUpdate,
   SMZAUpdate,
-  ZAdisabled
+  ZAdisabled,
+  SMdisabled
 };
 
 /** The opcodes of simeng aarch64 micro-operations. */
@@ -420,6 +421,10 @@ class Instruction : public simeng::Instruction {
   // Execution
   /** Generate a ZAdisabled exception. */
   void ZAdisabled();
+
+  // Execution
+  /** Generate a SMdisabled exception. */
+  void SMdisabled();
 
   // Instruction Identifiers
   /** Operates on scalar values */
