@@ -34,31 +34,18 @@ void ReorderBuffer::reserve(const std::shared_ptr<Instruction>& insn) {
 }
 
 void ReorderBuffer::commitMicroOps(uint64_t insnId) {
-  if (buffer_.size()) {
-    size_t index = 0;
-    int firstOp = -1;
-    bool validForCommit = false;
+  if (!buffer_.empty()) {
+    // Do a binary search to find the first instruction that matches insID
+    auto it =
+        std::lower_bound(buffer_.begin(), buffer_.end(), insnId, idCompare);
+    auto firstOp = it - buffer_.begin();
 
-    // Find first instance of uop belonging to macro-op instruction
-    for (; index < buffer_.size(); index++) {
-      if (buffer_[index]->getInstructionId() == insnId) {
-        firstOp = index;
-        break;
-      }
-    }
-
-    if (firstOp > -1) {
+    if (it != buffer_.end()) {
       // If found, see if all uops are committable
-      for (; index < buffer_.size(); index++) {
+      for (auto index = firstOp; index < buffer_.size(); index++) {
         if (buffer_[index]->getInstructionId() != insnId) break;
-        if (!buffer_[index]->isWaitingCommit()) {
-          return;
-        } else if (buffer_[index]->isLastMicroOp()) {
-          // all microOps must be in ROB for the commit to be valid
-          validForCommit = true;
-        }
+        if (!buffer_[index]->isWaitingCommit()) return;
       }
-      if (!validForCommit) return;
 
       // No early return thus all uops are committable
       for (; firstOp < buffer_.size(); firstOp++) {
