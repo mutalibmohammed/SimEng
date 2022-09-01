@@ -10,6 +10,12 @@
 namespace simeng {
 namespace pipeline {
 
+/** Check if the instruction ID is less than a given value. */
+auto idCompare = [](const std::shared_ptr<Instruction>& first,
+                    const uint64_t second) {
+  return first->getInstructionId() < second;
+};
+
 /** A branch prediction outcome with an associated instruction address. */
 struct latestBranch {
   /** Branch instruction address. */
