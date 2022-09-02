@@ -58,4 +58,32 @@ void Instruction::setWaitingCommit() { waitingCommit_ = true; }
 bool Instruction::isWaitingCommit() const { return waitingCommit_; }
 int Instruction::getMicroOpIndex() const { return microOpIndex_; }
 
+uint8_t Instruction::getChildMicroOpCount() const {
+  return numberOfChildMicroOps_;
+}
+
+void Instruction::registerParentMicroOp(std::shared_ptr<Instruction>& parent) {
+  parent->registerChildMicroOp_();
+  uopData_ = parent;
+}
+
+void Instruction::childMicroOpReady() {
+  std::get<0>(uopData_)--;
+  assert(std::get<0>(uopData_) >= 0 &&
+         "ChildMicroOpCount should not go below 0");
+}
+
+void Instruction::notifyParentReady() {
+  // if (auto ptr = std::get_if<std::shared_ptr<Instruction>>(&uopData_))
+  //   (*ptr)->childMicroOpReady();
+  if (uopData_.index() == 1) std::get<1>(uopData_)->childMicroOpReady();
+}
+
+bool Instruction::areChildMicroOpsReady() const {
+  return std::get<0>(uopData_) == 0;
+}
+void Instruction::registerChildMicroOp_() {
+  std::get<0>(uopData_)++;
+  numberOfChildMicroOps_++;
+}
 }  // namespace simeng

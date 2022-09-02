@@ -1,5 +1,6 @@
 #pragma once
 
+#include <variant>
 #include <vector>
 
 #include "capstone/capstone.h"
@@ -178,7 +179,26 @@ class Instruction {
   /** Get arbitrary micro-operation index. */
   int getMicroOpIndex() const;
 
+  /** Get count of child uops. */
+  uint8_t getChildMicroOpCount() const;
+
+  /** Register instruction as the parent uop. */
+  void registerParentMicroOp(std::shared_ptr<Instruction>&);
+
+  /** Decrements the counter for number of child uops that are not ready. No-op
+   * if uop has no children. */
+  void childMicroOpReady();
+
+  /** Notify parent uop that this uop is waiting to commit. */
+  void notifyParentReady();
+
+  /** Are all the child uops waiting to commit? */
+  bool areChildMicroOpsReady() const;
+
  protected:
+  /** Increments the number of child uops registered to this uop. */
+  void registerChildMicroOp_();
+
   /** Whether an exception has been encountered. */
   bool exceptionEncountered_ = false;
 
@@ -252,6 +272,13 @@ class Instruction {
   /** An arbitrary index value for the micro-operation. Its use is based on the
    * implementation of specific micro-operations. */
   int microOpIndex_;
+
+  /** Number of child uops that are registered to this uop. */
+  uint8_t numberOfChildMicroOps_ = 0;
+
+  /** Stores a counter or a pointer to the parent uop depending on wether it is
+   * child or a parent uop. */
+  std::variant<uint8_t, std::shared_ptr<Instruction>> uopData_;
 };
 
 }  // namespace simeng
