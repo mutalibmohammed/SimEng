@@ -424,6 +424,7 @@ uint8_t MicroDecoder::decode(const Architecture& architecture, uint32_t word,
     output.resize(num_ops);
     for (size_t uop = 0; uop < num_ops; uop++) {
       output[uop] = std::make_shared<Instruction>(iter->second[uop]);
+      if (uop > 0) output[uop]->registerParentMicroOp(output[0]);
     }
   }
   return num_ops;
