@@ -29,6 +29,7 @@ void WritebackUnit::tick() {
     }
     if (uop->isMicroOp()) {
       uop->setWaitingCommit();
+      uop->notifyParentReady();
       flagMicroOpCommits_(uop->getInstructionId());
       if (uop->isLastMicroOp()) instructionsWritten_++;
     } else {

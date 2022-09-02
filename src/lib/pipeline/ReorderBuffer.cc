@@ -36,21 +36,17 @@ void ReorderBuffer::reserve(const std::shared_ptr<Instruction>& insn) {
 void ReorderBuffer::commitMicroOps(uint64_t insnId) {
   if (!buffer_.empty()) {
     // Do a binary search to find the first instruction that matches insID
-    auto it =
+    const auto& it =
         std::lower_bound(buffer_.begin(), buffer_.end(), insnId, idCompare);
     auto firstOp = it - buffer_.begin();
 
     if (it != buffer_.end()) {
-      // If found, see if all uops are committable
-      for (auto index = firstOp; index < buffer_.size(); index++) {
-        if (buffer_[index]->getInstructionId() != insnId) break;
-        if (!buffer_[index]->isWaitingCommit()) return;
-      }
+      const auto& insn = (*it);
 
-      // No early return thus all uops are committable
-      for (; firstOp < buffer_.size(); firstOp++) {
-        if (buffer_[firstOp]->getInstructionId() != insnId) break;
-        buffer_[firstOp]->setCommitReady();
+      if (insn->areChildMicroOpsReady()) {
+        for (; firstOp <= insn->getChildMicroOpCount(); firstOp++) {
+          buffer_[firstOp]->setCommitReady();
+        }
       }
     }
   }
