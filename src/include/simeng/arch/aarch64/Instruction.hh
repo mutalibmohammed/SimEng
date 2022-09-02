@@ -210,7 +210,7 @@ class Instruction : public simeng::Instruction {
    */
   Instruction(const Architecture& architecture,
               const InstructionMetadata& metadata,
-              MicroOpInfo microOpInfo = MicroOpInfo());
+              const MicroOpInfo& microOpInfo = MicroOpInfo());
 
   /** Construct an instruction instance that raises an exception. */
   Instruction(const Architecture& architecture,
