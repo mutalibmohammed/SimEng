@@ -128,15 +128,23 @@ int main(int argc, char** argv) {
     uint32_t hex[] = {
         // 0x321E03E0,  // orr w0, wzr, #4
         // 0x321603E0,  // orr w0, wzr, #1024
-        0x320C03E0,  // orr w0, wzr, #1048576
-        0x320003E1,  // orr w0, wzr, #1
-        0x71000400,  // subs w0, w0, #1
-        // 0x00000000,  // invalid
-        0x54FFFFC1,  // b.ne -8
-                     // .exit:
-        0xD2800000,  // mov x0, #0
-        0xD2800BC8,  // mov x8, #94
-        0xD4000001,  // svc #0
+        //        0x320C03E0,  // orr w0, wzr, #1048576
+        //        0x320003E1,  // orr w0, wzr, #1
+        //        0x71000400,  // subs w0, w0, #1
+        //        // 0x00000000,  // invalid
+        //        0x54FFFFC1,  // b.ne -8
+        //                     // .exit:
+        //        0xD2800000,  // mov x0, #0
+        //        0xD2800BC8,  // mov x8, #94
+        //        0xD4000001,  // svc #0
+        //        0x02107053,  // fadd.d	ft0,ft0,ft1
+        //        0xfe043807,  // fld	ft1,-32(s0)
+        //        0xfc043827,  // fsd	ft0,-48(s0)
+        //        0x00053027,  // fsd	ft0,0(a0)
+        //        0x02007052,  // fadd.d	ft0,ft0,ft0
+        0x00007053,  // fadd.s	ft0,ft0,ft0
+                     //        0xfec42007,  // flw	ft0,-20(s0)
+
     };
 
     // Load/store consistency test; a simple bubble sort algorithm
