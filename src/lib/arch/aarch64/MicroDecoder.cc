@@ -521,6 +521,7 @@ Instruction MicroDecoder::createLdrUop(const Architecture& architecture,
   ldr.setExecutionInfo(architecture.getExecutionInfo(ldr));
   // deleteme
   // one more deleteme
+  // push again
   return ldr;
 }
 
