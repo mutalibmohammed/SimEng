@@ -520,6 +520,7 @@ Instruction MicroDecoder::createLdrUop(const Architecture& architecture,
                                lastMicroOp, microOpIndex}));
   ldr.setExecutionInfo(architecture.getExecutionInfo(ldr));
   // deleteme
+  // one more deleteme
   return ldr;
 }
 
