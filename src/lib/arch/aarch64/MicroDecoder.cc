@@ -78,7 +78,7 @@ bool MicroDecoder::detectOverlap(arm64_reg registerA, arm64_reg registerB) {
 }
 
 uint8_t MicroDecoder::decode(const Architecture& architecture, uint32_t word,
-                             Instruction macroOp, MacroOp& output,
+                             const Instruction& macroOp, MacroOp& output,
                              csh capstoneHandle) {
   uint8_t num_ops = 1;
   if (!instructionSplit_) {
@@ -519,6 +519,9 @@ Instruction MicroDecoder::createLdrUop(const Architecture& architecture,
                   MicroOpInfo({true, MicroOpcode::LDR_ADDR, dataSize,
                                lastMicroOp, microOpIndex}));
   ldr.setExecutionInfo(architecture.getExecutionInfo(ldr));
+  // deleteme
+  // one more deleteme
+  // push again
   return ldr;
 }
 
