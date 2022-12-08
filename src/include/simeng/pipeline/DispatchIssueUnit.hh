@@ -44,7 +44,7 @@ struct dependencyEntry {
   /** The port to issue to. */
   uint16_t port;
   /** The operand waiting on a value. */
-  uint8_t operandIndex;
+  uint16_t operandIndex;
 };
 
 /** A dispatch/issue unit for an out-of-order pipelined processor. Reads
@@ -127,6 +127,10 @@ class DispatchIssueUnit {
   /** A map to collect flushed instructions for each reservation station. */
   std::unordered_map<uint16_t, std::unordered_set<std::shared_ptr<Instruction>>>
       flushed_;
+
+  /** Stores the number of instructions dispatched for each
+   * reservation station. */
+  std::unique_ptr<uint16_t[]> dispatches_;
 
   /** A reference to the execution port allocator. */
   PortAllocator& portAllocator_;

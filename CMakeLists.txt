@@ -13,18 +13,22 @@ macro(FetchContent_MakeAvailable_Args NAME ARGS)
     endif()
 endmacro()
 
+# Need an additional macro for LLVM as a sub-directory needs to be targeted for llvm-14.0.5
+macro(FetchContent_MakeAvailable_SubDir_Args NAME SUBDIR ARGS)
+    FetchContent_GetProperties(${NAME})
+    if(NOT ${NAME}_POPULATED)
+        FetchContent_Populate(${NAME})
+        add_subdirectory(${${NAME}_SOURCE_DIR}/${SUBDIR}/ ${${NAME}_BINARY_DIR} ${ARGS})
+    endif()
+endmacro()
+
 # we don't use git for LLVM here as it clones the entire LLVM repo which takes too long and we only need a small part of it
 
 FetchContent_Declare(
   llvm
-  URL      https://github.com/llvm/llvm-project/releases/download/llvmorg-12.0.0/llvm-12.0.0.src.tar.xz
-  URL_HASH MD5=ceab21c9081e122a88d82216a80d0dc0
+  URL      https://github.com/llvm/llvm-project/releases/download/llvmorg-14.0.5/llvm-14.0.5.src.tar.xz
+  URL_HASH MD5=6bd202e403d950c78985048ce499a518
 )
-
-# FetchContent_Declare(
-#   llvm
-#   URL      https://github.com/llvm/llvm-project/releases/download/llvmorg-9.0.1/llvm-9.0.1.src.tar.xz
-# )
 
 FetchContent_Declare(
   googletest
@@ -46,7 +50,7 @@ FetchContent_Declare(
 FetchContent_Declare(
   capstone-lib
   GIT_REPOSITORY https://github.com/UoB-HPC/capstone.git
-  GIT_TAG Armv9.2-update
+  GIT_TAG next
   GIT_PROGRESS TRUE
 
   # Old Git tag pre-Armv9.2
@@ -107,7 +111,6 @@ set(CAPSTONE_EVM_SUPPORT OFF CACHE BOOL "Disable EVM support")
 set(CAPSTONE_MOS65XX_SUPPORT OFF CACHE BOOL "Disable MSO65XX support")
 set(CAPSTONE_WASM_SUPPORT OFF CACHE BOOL "Disable WASM support")
 set(CAPSTONE_BPF_SUPPORT OFF CACHE BOOL "Disable BPF support")
-set(CAPSTONE_RISCV_SUPPORT OFF CACHE BOOL "Disable RISCV support")
 
 FetchContent_MakeAvailable_Args(capstone-lib EXCLUDE_FROM_ALL)
 include_directories("${capstone_BINARY_DIR}/include" "${capstone_SOURCE_DIR}/include")
@@ -122,6 +125,8 @@ option(SIMENG_ENABLE_TESTS "Whether to enable testing for SimEng" OFF)
 option(SIMENG_USE_EXTERNAL_LLVM "Use an external LLVM rather than building it as a submodule" OFF)
 option(SIMENG_SANITIZE "Enable compiler sanitizers" OFF)
 option(SIMENG_OPTIMIZE "Enable Extra Compiler Optimizatoins" OFF)
+option(SIMENG_ENABLE_SST "Compile SimEng SST Wrapper" OFF)
+option(SIMENG_ENABLE_SST_TESTS "Enable testing for SST" OFF)
 
 if (SIMENG_OPTIMIZE)
   # Turn on link time optimization for all targets.
@@ -148,13 +153,18 @@ if(SIMENG_ENABLE_TESTS)
     find_package(LLVM REQUIRED CONFIG NO_CMAKE_BUILDS_PATH)
 
       # Check LLVM version
-    if (${LLVM_PACKAGE_VERSION} VERSION_LESS "8.0")
-      message(FATAL_ERROR "LLVM version must be >= 8.0")
+    if ((${LLVM_PACKAGE_VERSION} VERSION_LESS "8.0") OR (${LLVM_PACKAGE_VERSION} VERSION_GREATER_EQUAL "14.1"))
+      message(FATAL_ERROR "LLVM version must be >= 8.0 and <= 14.0")
+    endif()
+
+      # Print message containing if the full test suite will run
+    if (${LLVM_PACKAGE_VERSION} VERSION_LESS "14.0")
+      message(STATUS "LLVM version does not support AArch64 extensions SME or SVE2. These test suites will be skipped.")
     endif()
 
   else()
 
-    set(LLVM_TARGETS_TO_BUILD "AArch64" CACHE INTERNAL "")
+    set(LLVM_TARGETS_TO_BUILD "AArch64;RISCV" CACHE INTERNAL "")
 
     set(LLVM_BUILD_RUNTIME OFF)
 
@@ -178,7 +188,7 @@ if(SIMENG_ENABLE_TESTS)
     set(LLVM_INSTALL_UTILS OFF)
 
     # XXX all LLVM specific cmake variables must be set BEFORE FetchContent_MakeAvailable otherwise they have no effect
-    FetchContent_MakeAvailable_Args(llvm EXCLUDE_FROM_ALL)
+    FetchContent_MakeAvailable_SubDir_Args(llvm llvm-14.0.5.src EXCLUDE_FROM_ALL)
     # make sure we get the headers too
     include_directories("${llvm_BINARY_DIR}/include" "${llvm_SOURCE_DIR}/include")
 
@@ -187,13 +197,7 @@ if(SIMENG_ENABLE_TESTS)
 
     # NOTE: we don't do the usual version checks here because it needs vars exported in find_LLVM
     # we just assume it's good beacuse it must be whitelisted in FetchContent_Declare
-
-  endif()
-
-  # Check LLVM version
-  if ((${LLVM_PACKAGE_VERSION} VERSION_LESS "9.0") OR (${LLVM_PACKAGE_VERSION} VERSION_GREATER_EQUAL "13.0"))
-    message(FATAL_ERROR "LLVM version must be >= 9.0 and < 13.0")
-  endif()
+endif()
 
   set(SIMENG_LLVM_VERSION ${LLVM_VERSION_MAJOR} CACHE INTERNAL "LLVM major version number used.")
   message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
@@ -202,6 +206,9 @@ if(SIMENG_ENABLE_TESTS)
   # Check LLVM was built with the correct targets enabled
   if (NOT "AArch64" IN_LIST LLVM_TARGETS_TO_BUILD)
     message(FATAL_ERROR "LLVM was built without AArch64 target")
+  endif()
+  if (NOT "RISCV" IN_LIST LLVM_TARGETS_TO_BUILD)
+      message(FATAL_ERROR "LLVM was built without RISC-V target")
   endif()
 
   ## Setup googletest ##
@@ -212,10 +219,31 @@ if(SIMENG_ENABLE_TESTS)
   # saves us from having to build all targets before running the tests
   add_custom_target(test-all
     COMMAND ${CMAKE_CTEST_COMMAND}
-    DEPENDS unittests regression-aarch64
+    DEPENDS unittests regression-aarch64 regression-riscv
   )
 endif()
 
 # include sources
 add_subdirectory(src)
 add_subdirectory(docs)
+
+if (SIMENG_ENABLE_SST)
+  if (SST_INSTALL_DIR)
+    add_subdirectory(sst)
+    if (SIMENG_ENABLE_SST_TESTS)
+      enable_testing()
+      list(APPEND CMAKE_CTEST_ARGUMENTS "--verbose")
+      add_custom_target(test-sst-simeng
+      COMMAND ${CMAKE_CTEST_COMMAND}
+      DEPENDS sstsimengtest
+      )
+    endif()
+  else()
+    message(WARNING "SST build was selected but SST install directory was not specified.
+    Please specify -DSST_INSTALL_DIR=<path> for the SST build to proceed.")  
+  endif()
+endif()
+
+# Install SimEng model configs in the build directory
+set(SIMENG_CONFIG_INSTALL_DIR "${CMAKE_BINARY_DIR}/simeng-configs")
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/configs/ DESTINATION ${SIMENG_CONFIG_INSTALL_DIR})
