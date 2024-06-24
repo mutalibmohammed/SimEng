@@ -56,8 +56,8 @@ void DispatchIssueUnit::tick() {
 
   /** Stores the number of instructions dispatched for each
    * reservation station. */
-  std::vector<uint16_t> dispatches = {
-      0, static_cast<unsigned short>(reservationStations_.size())};
+  std::vector<uint16_t> dispatches(
+      static_cast<unsigned short>(reservationStations_.size()), 0);
 
   for (size_t slot = 0; slot < input_.getWidth(); slot++) {
     auto& uop = input_.getHeadSlots()[slot];
@@ -96,7 +96,7 @@ void DispatchIssueUnit::tick() {
     // Register read
     // Identify remaining missing registers and supply values
     auto& sourceRegisters = uop->getOperandRegisters();
-    for (uint8_t i = 0; i < sourceRegisters.size(); i++) {
+    for (uint16_t i = 0; i < sourceRegisters.size(); i++) {
       const auto& reg = sourceRegisters[i];
 
       if (!uop->isOperandReady(i)) {
@@ -181,7 +181,7 @@ void DispatchIssueUnit::forwardOperands(const span<Register>& registers,
     scoreboard_[reg.type][reg.tag] = true;
 
     // Supply the value to all dependent uops
-    const auto& dependents = dependencyMatrix_[reg.type][reg.tag];
+    auto& dependents = dependencyMatrix_[reg.type][reg.tag];
     for (auto& entry : dependents) {
       entry.uop->supplyOperand(entry.operandIndex, values[i]);
       if (entry.uop->canExecute()) {
