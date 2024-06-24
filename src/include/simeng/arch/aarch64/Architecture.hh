@@ -54,15 +54,35 @@ class Architecture : public arch::Architecture {
   /** Returns the current vector length set by the provided configuration. */
   uint64_t getVectorLength() const;
 
+  /** Returns the current streaming vector length set by the provided
+   * configuration. */
+  uint64_t getStreamingVectorLength() const;
+
   /** Updates System registers of any system-based timers. */
   void updateSystemTimerRegisters(RegisterFileSet* regFile,
                                   const uint64_t iterations) const override;
+
+  /** Returns the physical register structure as defined within the config file
+   */
+  std::vector<RegisterFileStructure> getConfigPhysicalRegisterStructure(
+      YAML::Node config) const override;
+
+  /** Returns the physical register quantities as defined within the config file
+   */
+  std::vector<uint16_t> getConfigPhysicalRegisterQuantities(
+      YAML::Node config) const override;
 
   /** Retrieve an ExecutionInfo object for the requested instruction. If a
    * opcode-based override has been defined for the latency and/or
    * port information, return that instead of the group-defined execution
    * information. */
   ExecutionInfo getExecutionInfo(Instruction& insn) const;
+
+  /** Returns the current value of SVCRval_. */
+  uint64_t getSVCRval() const;
+
+  /** Update the value of SVCRval_. */
+  void setSVCRval(const uint64_t newVal) const;
 
  private:
   /** A decoding cache, mapping an instruction word to a previously decoded
@@ -73,6 +93,9 @@ class Architecture : public arch::Architecture {
    * decoded instruction metadata bundle. Metadata is added to the cache as it's
    * decoded, to reduce the overhead of future decoding. */
   static std::forward_list<InstructionMetadata> metadataCache;
+
+  /** A copy of the value of the SVCR system register. */
+  static uint64_t SVCRval_;
 
   /** A mapping from system register encoding to a zero-indexed tag. */
   std::unordered_map<uint16_t, uint16_t> systemRegisterMap_;
@@ -96,6 +119,9 @@ class Architecture : public arch::Architecture {
 
   /** The vector length used by the SVE extension in bits. */
   uint64_t VL_;
+
+  /** The streaming vector length used by the SME extension in bits. */
+  uint64_t SVL_;
 
   /** System Register of Virtual Counter Timer. */
   simeng::Register VCTreg_;
